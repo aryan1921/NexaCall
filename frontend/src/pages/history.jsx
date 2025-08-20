@@ -1,22 +1,13 @@
+// src/pages/history.jsx
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import withAuth from '../utils/withAuth';
 import authService from '../services/auth.service';
-
-import {
-  Card,
-  CardContent,
-  Button,
-  Typography,
-  Snackbar,
-  Alert,
-  IconButton,
-} from '@mui/material';
-import HomeIcon from '@mui/icons-material/Home';
+import { HomeIcon } from '@heroicons/react/24/solid';
 
 function History() {
   const [meetings, setMeetings] = useState([]);
-  const [open, setOpen] = useState(false);
+  const [showSnackbar, setShowSnackbar] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const navigate = useNavigate();
 
@@ -30,87 +21,62 @@ function History() {
             setMeetings(Array.isArray(result.history) ? result.history : []);
           } else {
             setSnackbarMessage(result.error || 'Failed to fetch history');
-            setOpen(true);
+            setShowSnackbar(true);
           }
         }
-      } catch (e) {
+      } catch {
         if (mounted) {
           setSnackbarMessage('Failed to fetch history');
-          setOpen(true);
+          setShowSnackbar(true);
         }
       }
     })();
-    return () => {
-      mounted = false;
-    };
+    return () => { mounted = false; };
   }, []);
 
   const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    const dd = String(date.getDate()).padStart(2, '0');
-    const mm = String(date.getMonth() + 1).padStart(2, '0');
-    const yyyy = date.getFullYear();
-    return `${dd}/${mm}/${yyyy}`;
+    const d = new Date(dateString);
+    return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth()+1).padStart(2, '0')}/${d.getFullYear()}`;
   };
 
   return (
-    <div style={{ maxWidth: 720, margin: '24px auto', padding: '0 12px' }}>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          marginBottom: 16,
-        }}
-      >
-        <IconButton onClick={() => navigate('/home')}>
-          <HomeIcon />
-        </IconButton>
-        <Typography variant="h6">Meeting History</Typography>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white p-4">
+      <div className="max-w-3xl mx-auto">
+        <div className="flex items-center gap-4 mb-6">
+          <button className="btn btn-ghost btn-circle" onClick={() => navigate('/home')}>
+            <HomeIcon className="h-6 w-6" />
+          </button>
+          <h1 className="text-3xl font-bold">Meeting History</h1>
+        </div>
+
+        {meetings.length === 0 ? (
+          <p className="text-gray-400 text-center mt-8">No meetings found.</p>
+        ) : (
+          <div className="grid gap-4">
+            {meetings.map((m, idx) => (
+              <div key={`${m.meetingCode}-${idx}`} className="card bg-base-100 shadow-xl">
+                <div className="card-body">
+                  <h2 className="card-title text-lg text-gray-300">Code: {m.meetingCode}</h2>
+                  <p className="text-gray-400">Date: {formatDate(m.date)}</p>
+                  <div className="card-actions justify-end">
+                    <button className="btn btn-primary" onClick={() => navigate(`/${m.meetingCode}`)}>
+                      Rejoin
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {showSnackbar && (
+          <div className="toast toast-center toast-bottom">
+            <div className="alert alert-error">
+              <span>{snackbarMessage}</span>
+            </div>
+          </div>
+        )}
       </div>
-
-      {meetings.length === 0 ? (
-        <Typography color="text.secondary">No meetings found.</Typography>
-      ) : (
-        meetings.map((m, idx) => (
-          <Card
-            key={`${m.meetingCode}-${idx}`}
-            variant="outlined"
-            sx={{ mb: 2 }}
-          >
-            <CardContent>
-              <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
-                Code: {m.meetingCode}
-              </Typography>
-              <Typography sx={{ mb: 1.5 }} color="text.secondary">
-                Date: {formatDate(m.date)}
-              </Typography>
-              <Button
-                variant="contained"
-                onClick={() => navigate(`/${m.meetingCode}`)}
-              >
-                Rejoin
-              </Button>
-            </CardContent>
-          </Card>
-        ))
-      )}
-
-      <Snackbar
-        open={open}
-        autoHideDuration={4000}
-        onClose={() => setOpen(false)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert
-          onClose={() => setOpen(false)}
-          severity="error"
-          variant="filled"
-          sx={{ width: '100%' }}
-        >
-          {snackbarMessage}
-        </Alert>
-      </Snackbar>
     </div>
   );
 }

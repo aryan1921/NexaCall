@@ -154,16 +154,7 @@ export default function Authentication() {
   const { login, register, error: authError, clearError, loading } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    clearError();
-    setFormData({
-      email: '',
-      username: '',
-      password: '',
-      confirmPassword: '',
-    });
-    setErrors({});
-  }, [isRegister, clearError]);
+  
 
   const validateForm = () => {
     const newErrors = {};
